@@ -1,25 +1,21 @@
 console.log("=== SERVER WITH MONGODB ===");
 
-// Load environment
+//
 require("dotenv/config");
 console.log("Environment loaded");
 
-// Load dependencies
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 console.log("Dependencies loaded");
 
-// Create app
 const app = express();
 const port = 3001;
 
-// Add middleware
 app.use(cors());
 app.use(express.json());
 console.log("Middleware configured");
 
-// Create Form schemas
 const FieldSchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
@@ -31,7 +27,7 @@ const FieldSchema = new mongoose.Schema(
     style: mongoose.Schema.Types.Mixed, // Allow any object structure for styling
   },
   { _id: false }
-); // Disable _id for subdocuments
+); 
 
 const FormSchema = new mongoose.Schema(
   {
@@ -57,14 +53,10 @@ const Form = mongoose.model("Form", FormSchema);
 const FormSubmission = mongoose.model("FormSubmission", FormSubmissionSchema);
 console.log("Models created");
 
-// API Routes
-
-// Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date() });
 });
 
-// Get all forms
 app.get("/api/forms", async (req, res) => {
   try {
     const forms = await Form.find().sort({ updatedAt: -1 });
@@ -89,7 +81,7 @@ app.get("/api/forms/:id", async (req, res) => {
   }
 });
 
-// Create a new form
+
 app.post("/api/forms", async (req, res) => {
   try {
     console.log("🆕 Creating new form");
@@ -130,7 +122,6 @@ app.put("/api/forms/:id", async (req, res) => {
 
     const { title, description, fields, isPublished } = req.body;
 
-    // Validate fields array if present
     if (fields && Array.isArray(fields)) {
       console.log("✅ Fields is valid array with", fields.length, "items");
     } else if (fields) {
@@ -163,7 +154,7 @@ app.put("/api/forms/:id", async (req, res) => {
   }
 });
 
-// Delete a form
+
 app.delete("/api/forms/:id", async (req, res) => {
   try {
     const deletedForm = await Form.findOneAndDelete({ id: req.params.id });
@@ -181,7 +172,6 @@ app.delete("/api/forms/:id", async (req, res) => {
   }
 });
 
-// Submit a form response
 app.post("/api/forms/:id/submit", async (req, res) => {
   try {
     const { data } = req.body;
@@ -210,7 +200,7 @@ app.post("/api/forms/:id/submit", async (req, res) => {
   }
 });
 
-// Get form submissions
+
 app.get("/api/forms/:id/submissions", async (req, res) => {
   try {
     const submissions = await FormSubmission.find({
@@ -224,7 +214,6 @@ app.get("/api/forms/:id/submissions", async (req, res) => {
 });
 console.log("Routes configured");
 
-// Start server function
 async function startServer() {
   try {
     console.log("Connecting to MongoDB...");

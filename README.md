@@ -149,30 +149,6 @@ Users can access published forms via direct links and submit responses. All subm
 
 ```
 
-src/
-├── components/
-│ ├── FormBuilder/
-│ │ ├── FieldPalette.tsx # Drag-and-drop field palette
-│ │ ├── FormCanvas.tsx # Form editing canvas
-│ │ ├── FormPreview.tsx # Real-time form preview
-│ │ └── FormSettings.tsx # Form styling and settings
-│ └── Navbar.tsx # Navigation component
-├── pages/
-│ ├── Dashboard.tsx # Forms management dashboard
-│ ├── FormBuilder.tsx # Form creation/editing page
-│ ├── FormView.tsx # Form submission page
-│ └── FormAnalytics.tsx # Analytics and data export
-├── types/
-│ └── index.ts # TypeScript type definitions
-├── App.tsx # Main application component
-├── main.tsx # Application entry point
-└── index.css # Global styles and Tailwind
-
-server/
-└── index.ts # Express.js API server
-
-```
-
 ## API Endpoints
 
 - `GET /api/forms` - Get all forms
