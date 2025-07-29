@@ -1,0 +1,14 @@
+{
+  "title": "Test Form",
+  "description": "Testing form creation",
+  "fields": [
+    {
+      "id": "field1",
+      "type": "text",
+      "label": "Test Field",
+      "placeholder": "Enter text",
+      "required": false,
+      "style": {}
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-console.log("=== SERVER WITH MONGODB ===");
+console.log("=== FORMS BUILDER SERVER ===");
 
 // Load environment
 require("dotenv/config");
@@ -20,25 +20,55 @@ app.use(express.json());
 console.log("Middleware configured");
 
 // Create Form schemas
-const FieldSchema = new mongoose.Schema(
-  {
-    id: { type: String, required: true },
-    type: { type: String, required: true },
-    label: { type: String, required: true },
-    placeholder: String,
-    required: { type: Boolean, default: false },
-    options: [String],
-    style: mongoose.Schema.Types.Mixed, // Allow any object structure for styling
-  },
-  { _id: false }
-); // Disable _id for subdocuments
-
 const FormSchema = new mongoose.Schema(
   {
     id: { type: String, required: true, unique: true },
     title: { type: String, required: true },
     description: String,
-    fields: [FieldSchema],
+    fields: [
+      {
+        id: String,
+        type: String,
+        label: String,
+        placeholder: String,
+        required: Boolean,
+        options: [String],
+      },
+    ],
+    isPublished: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+const FormSubmissionSchema = new mongoose.Schema(
+  {
+    formId: { type: String, required: true },
+    data: mongoose.Schema.Types.Mixed,
+    submittedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+const Form = mongoose.model("Form", FormSchema);
+const FormSubmission = mongoose.model("FormSubmission", FormSubmissionSchema);
+console.log("Models configured");
+
+// Create simple schemas for forms
+const FormSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    title: { type: String, required: true },
+    description: String,
+    fields: [
+      {
+        id: String,
+        type: String,
+        label: String,
+        placeholder: String,
+        required: Boolean,
+        options: [String],
+      },
+    ],
     isPublished: { type: Boolean, default: false },
   },
   { timestamps: true }
@@ -56,8 +86,6 @@ const FormSubmissionSchema = new mongoose.Schema(
 const Form = mongoose.model("Form", FormSchema);
 const FormSubmission = mongoose.model("FormSubmission", FormSubmissionSchema);
 console.log("Models created");
-
-// API Routes
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -92,16 +120,7 @@ app.get("/api/forms/:id", async (req, res) => {
 // Create a new form
 app.post("/api/forms", async (req, res) => {
   try {
-    console.log("🆕 Creating new form");
-    console.log("📄 Request body:", JSON.stringify(req.body, null, 2));
-
-    const { title, description, fields } = req.body;
-
-    // Validate fields array if present
-    if (fields && !Array.isArray(fields)) {
-      console.log("❌ Fields is not an array:", typeof fields);
-      return res.status(400).json({ error: "Fields must be an array" });
-    }
+    const { title, description, fields, settings } = req.body;
 
     const form = new Form({
       id: Date.now().toString(),
@@ -112,54 +131,39 @@ app.post("/api/forms", async (req, res) => {
     });
 
     const savedForm = await form.save();
-    console.log("✅ Form created successfully:", savedForm.id);
+    console.log("✅ Form created:", savedForm.id);
     res.status(201).json(savedForm);
   } catch (error) {
     console.error("Error creating form:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to create form", details: error.message });
+    res.status(500).json({ error: "Failed to create form" });
   }
 });
 
 // Update a form
 app.put("/api/forms/:id", async (req, res) => {
   try {
-    console.log("📝 Updating form:", req.params.id);
-    console.log("📄 Request body:", JSON.stringify(req.body, null, 2));
-
-    const { title, description, fields, isPublished } = req.body;
-
-    // Validate fields array if present
-    if (fields && Array.isArray(fields)) {
-      console.log("✅ Fields is valid array with", fields.length, "items");
-    } else if (fields) {
-      console.log("❌ Fields is not an array:", typeof fields);
-      return res.status(400).json({ error: "Fields must be an array" });
-    }
+    const { title, description, fields, settings, isPublished } = req.body;
 
     const updatedForm = await Form.findOneAndUpdate(
       { id: req.params.id },
       {
         title,
         description,
-        fields: fields || [],
+        fields,
         isPublished,
       },
-      { new: true, runValidators: true }
+      { new: true }
     );
 
     if (!updatedForm) {
       return res.status(404).json({ error: "Form not found" });
     }
 
-    console.log("✅ Form updated successfully:", updatedForm.id);
+    console.log("✅ Form updated:", updatedForm.id);
     res.json(updatedForm);
   } catch (error) {
     console.error("Error updating form:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to update form", details: error.message });
+    res.status(500).json({ error: "Failed to update form" });
   }
 });
 
@@ -172,7 +176,9 @@ app.delete("/api/forms/:id", async (req, res) => {
       return res.status(404).json({ error: "Form not found" });
     }
 
+    // Also delete all submissions for this form
     await FormSubmission.deleteMany({ formId: req.params.id });
+
     console.log("✅ Form deleted:", req.params.id);
     res.json({ message: "Form deleted successfully" });
   } catch (error) {
@@ -222,6 +228,7 @@ app.get("/api/forms/:id/submissions", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch submissions" });
   }
 });
+
 console.log("Routes configured");
 
 // Start server function
@@ -234,6 +241,7 @@ async function startServer() {
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
       console.log(`Health check: http://localhost:${port}/api/health`);
+      console.log(`Forms API: http://localhost:${port}/api/forms`);
     });
   } catch (error) {
     console.error("Error starting server:", error);
